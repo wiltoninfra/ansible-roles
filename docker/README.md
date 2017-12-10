@@ -1,38 +1,73 @@
-Role Name
-=========
+# Ansible Role: Docker
 
-A brief description of the role goes here.
+[![Build Status](https://travis-ci.org/geerlingguy/ansible-role-docker.svg?branch=master)](https://travis-ci.org/geerlingguy/ansible-role-docker)
 
-Requirements
-------------
+An Ansible Role that installs [Docker](https://www.docker.com) on Linux.
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+## Requirements
 
-Role Variables
---------------
+None.
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+## Role Variables
 
-Dependencies
-------------
+Available variables are listed below, along with default values (see `defaults/main.yml`):
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+    # Edition can be one of: 'ce' (Community Edition) or 'ee' (Enterprise Edition).
+    docker_edition: 'ce'
+    docker_package: "docker-{{ docker_edition }}"
+    docker_package_state: present
 
-Example Playbook
-----------------
+The `docker_edition` should be either `ce` (Community Edition) or `ee` (Enterprise Edition). You can also specify a specific version of Docker to install using a format like `docker-{{ docker_edition }}-<VERSION>`. And you can control whether the package is installed, uninstalled, or at the latest version by setting `docker_package_state` to `present`, `absent`, or `latest`, respectively.
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
+    docker_install_compose: true
+    docker_compose_version: "1.16.1"
+    docker_compose_path: /usr/local/bin/docker-compose
 
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
+Docker Compose installation options.
 
-License
--------
+    docker_apt_release_channel: stable
+    docker_apt_repository: "deb https://download.docker.com/linux/{{ ansible_distribution|lower }} {{ ansible_distribution_release }} {{ docker_apt_release_channel }}"
 
-BSD
+(Used only for Debian/Ubuntu.) You can switch the channel to `edge` if you want to use the Edge release.
 
-Author Information
-------------------
+    docker_yum_repo_url: https://download.docker.com/linux/centos/docker-{{ docker_edition }}.repo
+    docker_yum_repo_enable_edge: 0
+    docker_yum_repo_enable_test: 0
 
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+(Used only for RedHat/CentOS.) You can enable the Edge or Test repo by setting the respective vars to `1`.
+
+## Use with Ansible (and `docker` Python library)
+
+Many users of this role wish to also use Ansible to then _build_ Docker images and manage Docker containers on the server where Docker is installed. In this case, you can easily add in the `docker` Python library using the `geerlingguy.pip` role:
+
+```yaml
+- hosts: all
+
+  vars:
+    pip_install_packages:
+      - name: docker
+
+  roles:
+    - geerlingguy.pip
+    - geerlingguy.docker
+```
+
+## Dependencies
+
+None.
+
+## Example Playbook
+
+```yaml
+- hosts: all
+  roles:
+    - geerlingguy.docker
+```
+
+## License
+
+MIT / BSD
+
+## Author Information
+
+This role was created in 2017 by [Jeff Geerling](https://www.jeffgeerling.com/), author of [Ansible for DevOps](https://www.ansiblefordevops.com/).
