@@ -7,7 +7,7 @@
     group: root
     mode: 0644
     force: "{{ overwrite_global_mycnf }}"
-  notify: restart mysql
+  notify: Restart Mysql
 
 - name: Verifique se o diretório de inclusão mysql existe.
   file:
