@@ -1,0 +1,75 @@
+---
+- name: Copie my.cnf configuração global do MySQL.
+  template:
+    src: my.cnf.j2
+    dest: "{{ mysql_config_file }}"
+    owner: root
+    group: root
+    mode: 0644
+    force: "{{ overwrite_global_mycnf }}"
+  notify: restart mysql
+
+- name: Verifique se o diretório de inclusão mysql existe.
+  file:
+    path: "{{ mysql_config_include_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+  when: mysql_config_include_files | length
+
+- name: Copie my.cnf substituir arquivos para incluir diretório.
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ mysql_config_include_dir }}/{{ item.src | basename }}"
+    owner: root
+    group: root
+    mode: 0644
+    force: "{{ item.force | default(False) }}"
+  with_items: "{{ mysql_config_include_files }}"
+  notify: restart mysql
+
+- name: Crie um arquivo de log de consulta lenta (se configurado).
+  command: "touch {{ mysql_slow_query_log_file }}"
+  args:
+    creates: "{{ mysql_slow_query_log_file }}"
+    warn: no
+  when: mysql_slow_query_log_enabled
+
+- name: Crie datadir se não existir
+  file:
+    path: "{{ mysql_datadir }}"
+    state: directory
+    owner: mysql
+    group: mysql
+    mode:  0755
+    setype: mysqld_db_t
+
+- name: Defina a propriedade no arquivo de log de consulta lenta (se configurado).
+  file:
+    path: "{{ mysql_slow_query_log_file }}"
+    state: file
+    owner: mysql
+    group: mysql
+    mode: 0640
+  when: mysql_slow_query_log_enabled
+
+- name: Criar arquivo de log de erro (se configurado).
+  command: "touch {{ mysql_log_error }}"
+  args:
+    creates: "{{ mysql_log_error }}"
+    warn: no
+  when: mysql_log == "" and mysql_log_error != ""
+
+- name: Defina a propriedade no arquivo de log de erro (se configurado).
+  file:
+    path: "{{ mysql_log_error }}"
+    state: file
+    owner: mysql
+    group: mysql
+    mode: 0640
+  when: mysql_log == "" and mysql_log_error != ""
+
+- name: Certifique-se de que o MySQL tenha sido iniciado e ativado na inicialização.
+  service: "name={{ mysql_daemon }} state=started enabled={{ mysql_enabled_on_startup }}"
+  register: mysql_service_configuration
