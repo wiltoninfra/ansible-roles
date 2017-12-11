@@ -1,4 +1,5 @@
 ---
+
 - name: Ensure old versions of Docker are not installed.
   package:
     name: '{{ item }}'
@@ -29,13 +30,13 @@
   when: add_repository_key|failed
 
 - name: Add Docker apt key (alternative for older systems without SNI).
-  shell: "curl -fsSL https://download.docker.com/linux/$(. /etc/os-release; echo "$ID")/gpg | sudo apt-key add -"
+  shell: "curl -sSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -"
   args:
     warn: no
   when: add_repository_key|failed
 
 - name: Add Docker repository.
   apt_repository:
-    repo: "deb [arch=amd64] https://download.docker.com/linux/$(. /etc/os-release; echo "$ID") $(lsb_release -cs) stable"
+    repo: "{{ docker_apt_repository }}"
     state: present
     update_cache: yes
